@@ -1,0 +1,22 @@
+# Ignore these files
+*.nii
+*.7
+*.asv
+*.entry
+*.mod
+*.seq
+*.tar
+*.tgz
+*.txt
+*.fig
+*.mat
+*.png
+*.dat
+*.cfg
+*.gif
+*.param
+*.h5
+*.pge
+.DS_Store
+rodrigo/*
+coppe.m
