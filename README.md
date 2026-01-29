@@ -1,4 +1,5 @@
 # anyEPI: matlab/pulseq code for generating 3D-EPI sequences from arbitrary 2D sampling masks in the phase-encode-partition (ky-kz) plane
+![An example of a Poisson-Disc 3D-EPI trajectory and corresponding PSF.](poisson3DEPI.png)
 
 ## Getting started
 1. Set experimental parameters in ```params.m```. I recommend making a copy of this file for each experiment for reconstruction afte the scan.
