@@ -46,10 +46,11 @@ omegas = zeros(Ny, Nz, Nframes);
 parts = zeros(Ny, Nz, Nframes);
 schedules = zeros(Nframes, Nshots, ETL, 2);
 for frame = 1:Nframes
-    omega = pd_sample([Ny, Nz], R);
     % omega = caipi_sample([Ny, Nz], [3, 2], 3);
+    omega = pd_sample([Ny, Nz], R);
     % weights = gen_gaussian_pdf([Ny, Nz], [Ny, Nz] ./ 6);
     % omega = rand_sample([Ny, Nz], R, weights);
+
     omegas(:,:,frame) = omega; 
     [schedules(frame,:,:,:), parts(:,:,frame)] = mask2epi(omega, ETL, Nshots);
 end
@@ -246,8 +247,8 @@ end
 %% Save sampling locations for gridding
 save('samp_locs.mat', 'schedules', 'parts', '-v7.3');
 
-%% Plot in pulseq
-f = seq.plot('timeRange', [0 2*max(minTR, TR)], 'stacked', 1);
+%% Plot in pulseq (no figure call needed)
+seq.plot('timeRange', [0 2*max(minTR, TR)], 'stacked', 1);
 
 %% Write to .seq file
 seq.setDefinition('FOV', fov);
@@ -270,21 +271,17 @@ pislquant = 10; % Number of ADC events at start of scan for receive gain calibra
 PNSwt = [0 0 0]; % for phantom
 pge2.seq2ge(fn_seq, sysPGE2, pislquant, PNSwt);
 
-%% Check for forbidden gradient frequencies
+%% Plot in pge2
 ceq = seq2ceq(seq);
 figure;
 S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', [0.8 1 0.7]);
-check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm');
-return;
 
-%% Detailed sequence report
-% Slow but useful for testing during development,
-% e.g., for the real TE, TR or for staying within slew rate limits
-rep = seq.testReport;
-fprintf([rep{[1:9, 11:end]}]); % print report except warnings
-return;
+%% Plot only gradients in pge2
+figure; plotPGE2grads(ceq, sysPGE2, 'blockRange', [1 10], 'showBlocks', true, 'rotate', false, 'interpolate', true, 'wt', [0.8 1 0.7]);
 
 %% Plot trajectories stringing together samples (takes a while)
+[ktraj_adc, t_adc, ktraj, t_ktraj, t_excitation, t_refocusing] = seq.calculateKspacePP();
+
 figure;
 hold on;
 
@@ -319,12 +316,45 @@ end
 samps = 1:(length(ktraj_adc)/Nframes);
 plot(ktraj_adc(2,samps), ktraj_adc(3,samps),'r.', 'MarkerSize', 12); % plot the sampling points
 
+hx = plot([-Ny*deltak(2)/2, Ny*deltak(2)/2], [0 0], '-k');
+hy = plot([0 0], [-Nz*deltak(3)/2, Nz*deltak(3)/2], '-k');
+uistack(hx, 'bottom');
+uistack(hy, 'bottom');
+
 axis equal;
-title(sprintf('Rand 3D-EPI trajectory. R = %d', round(R)), 'FontSize', 18);
+title(sprintf('3D-EPI trajectory. R = %d', round(R)), 'FontSize', 18);
 xlabel('k_y (m^{-1})', 'FontSize', 18); ylabel('k_z (m^{-1})', 'FontSize', 18);
 xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
 
 toc;
+
+%% Plot sampling masks on grid
+[kys, kzs] = meshgrid([-Ny*deltak(2)/2:deltak(2):Ny*deltak(2)/2], [-Nz*deltak(3)/2:deltak(3):Nz*deltak(3)/2]);
+
+figure; hold on;
+hx = plot([-Ny*deltak(2)/2, Ny*deltak(2)/2], [0 0], '-k');
+hy = plot([0 0], [-Nz*deltak(3)/2, Nz*deltak(3)/2], '-k');
+uistack(hx, 'bottom');
+uistack(hy, 'bottom');
+plot(kys(:), kzs(:), 'k.', 'Color', [0.7 0.7 0.7], 'MarkerSize', 12);
+plot(ktraj_adc(2,samps), ktraj_adc(3,samps),'r.', 'MarkerSize', 12); % plot the sampling points
+
+axis equal;
+title(sprintf('2D sampling mask. R = %d', round(R)), 'FontSize', 18);
+xlabel('k_y (m^{-1})', 'FontSize', 18); ylabel('k_z (m^{-1})', 'FontSize', 18);
+xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
+
+return;
+
+%% Check for forbidden gradient frequencies
+check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm');
+return;
+
+%% Detailed sequence report
+% Slow but useful for testing during development,
+% e.g., for the real TE, TR or for staying within slew rate limits
+rep = seq.testReport;
+fprintf([rep{[1:9, 11:end]}]); % print report except warnings
 return;
 
 %% Plot point spread function in y-z space
@@ -338,3 +368,4 @@ xlabel('y (m)', 'FontSize', 18); ylabel('z (m)', 'FontSize', 18);
 zlabel('magnitude (a.u.)', 'FontSize', 18);
 title('Corresponding point spread function in y-z space', 'FontSize', 18);
 zticks(linspace(0,max(abs(psf(:))),5)); zticklabels(linspace(0,1,5));
+return;
