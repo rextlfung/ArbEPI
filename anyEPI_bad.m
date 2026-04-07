@@ -5,7 +5,7 @@
 run('params.m');
 
 %% Path and options
-seqname = 'anyEPI';
+seqname = 'anyEPI_bad';
 
 %% Excitation pulse
 % Target a slightly thinner slice to alleviate aliasing
@@ -46,10 +46,10 @@ omegas = zeros(Ny, Nz, Nframes);
 parts = zeros(Ny, Nz, Nframes);
 schedules = zeros(Nframes, Nshots, ETL, 2);
 for frame = 1:Nframes
-    rng(frame)
-    omega = caipi_sample([Ny, Nz], [3, 2], 3);
-    % omega = pd_sample([Ny, Nz], R);
-    % weights = gen_gaussian_pdf([Ny, Nz], [Ny, Nz] ./ 10);
+    rng(frame);
+    % omega = caipi_sample([Ny, Nz], [3, 2], 3);
+    omega = pd_sample([Ny, Nz], R);
+    % weights = gen_gaussian_pdf([Ny, Nz], [Ny, Nz] ./ 6);
     % omega = rand_sample([Ny, Nz], R, weights);
 
     omegas(:,:,frame) = omega; 
@@ -91,65 +91,61 @@ else % biggest blip in z
     gyBlip = mr.makeTrapezoid('y', sys, 'area', max_ky_step*deltak(2));
     gyBlip = mr.scaleGrad(gyBlip, 1/max_ky_step, sys);
 end
+gyBlip = trap4ge(gyBlip, CRT, sys);
+gzBlip = trap4ge(gzBlip, CRT, sys);
 
-% Readout trapezoid for ramp-sampling
+% Readout trapezoid
 systmp = sys;
 systmp.maxGrad = deltak(1)/dwell;  % to ensure Nyquist sampling
-gro = trap4ge(...
-    mr.makeTrapezoid('x', systmp, 'area', Nx*deltak(1) + maxBlipArea)...
-    , CRT, sys);
+gro = mr.makeTrapezoid('x', systmp, 'Area', Nx*deltak(1) + maxBlipArea);
+gro = trap4ge(gro,CRT,sys);
 
 % Circularly shift gro waveform to contain blips within each block
-[gro1, gro2] = mr.splitGradientAt(gro, blipDuration/2);
-gro2.delay = 0;
-gro1.delay = gro2.shape_dur;
-gro = mr.addGradients({gro2, mr.scaleGrad(gro1, -1)}, sys);
-gro1.delay = 0; % This piece is necessary at the very beginning of the readout
+% [gro1, gro2] = mr.splitGradientAt(gro, blipDuration/2);
+% gro2.delay = 0;
+% gro1.delay = gro2.shape_dur;
+% gro = mr.addGradients({gro2, mr.scaleGrad(gro1, -1)}, sys);
+% gro1.delay = 0; % This piece is necessary at the very beginning of the readout
 
 % ADC event
 Tread = mr.calcDuration(gro) - blipDuration;
-Nfid = round(Tread/dwell/4)*4;
+Nfid = floor(Tread/dwell/4)*4;
 adc = mr.makeAdc(Nfid, 'Dwell', dwell);
+adc.delay = blipDuration/2;
 
 % Delay blips so they play after adc stops
-gyBlip.delay = Tread;
-gzBlip.delay = Tread;
+% gyBlip.delay = Tread;
+% gzBlip.delay = Tread;
+
+% Split blips into up and down parts
+[gyBU, gyBD] = mr.splitGradientAt(gyBlip, mr.calcDuration(gyBlip)/2);
+gyBU.shape_dur = mr.calcDuration(gyBlip)/2;
+gyBD.shape_dur = mr.calcDuration(gyBlip)/2;
+gyBU.tt(2) = mr.calcDuration(gyBlip)/2;
+gyBD.tt(2) = mr.calcDuration(gyBlip)/2;
+gyBU.delay = mr.calcDuration(gro) - mr.calcDuration(gyBU);
+gyBD.delay = 0;
+[gzBU, gzBD] = mr.splitGradientAt(gzBlip, mr.calcDuration(gzBlip)/2);
+gzBU.shape_dur = mr.calcDuration(gzBlip)/2;
+gzBD.shape_dur = mr.calcDuration(gzBlip)/2;
+gzBU.tt(2) = mr.calcDuration(gzBlip)/2;
+gzBD.tt(2) = mr.calcDuration(gzBlip)/2;
+gzBU.delay = mr.calcDuration(gro) - mr.calcDuration(gzBU);
+gzBD.delay = 0;
 
 % Prephasers (Make duration long enough to support all 3 directions)
-tmp = 0.5; % temporary scale factor <1 (to avoid PNS issues)
-gxPre = trap4ge(...
-    mr.scaleGrad(...
-    mr.makeTrapezoid('x',sys,'Area',-Nx/2*deltak(1)/tmp)...
-    , tmp, sys)...
-    , CRT, sys);
-gyPre = trap4ge(...
-    mr.scaleGrad(...
-    mr.makeTrapezoid('y',sys,'Area',-Ny/2*deltak(2)/tmp)...
-    , tmp, sys)...
-    , CRT, sys);
-gzPre = trap4ge(...
-    mr.scaleGrad(...
-    mr.makeTrapezoid('z',sys,'Area',-Nz/2*deltak(3)/tmp)...
-    , tmp, sys)...
-    , CRT, sys);
+gxPre = trap4ge(mr.makeTrapezoid('x',sys,'Area',-(Nx*deltak(1) + maxBlipArea)/2),CRT,sys);
+gyPre = trap4ge(mr.makeTrapezoid('y',sys,'Area',-Ny/2*deltak(2)),CRT,sys);
+gzPre = trap4ge(mr.makeTrapezoid('z',sys,'Area',-Nz/2*deltak(3)),CRT,sys);
 
-% Spoilers
-tmp = 0.5; % temporary scale factor <1 (to avoid PNS issues)
-gxSpoil = trap4ge(...
-    mr.scaleGrad(...
-    mr.makeTrapezoid('x', sys, 'Area', Nx*deltak(1)*NcyclesSpoil/tmp)...
-    , tmp, sys)...
-    , CRT, sys);
-gySpoil = trap4ge(...
-    mr.scaleGrad(...
-    mr.makeTrapezoid('y', sys, 'Area', Ny*deltak(2)*NcyclesSpoil/tmp)...
-    , tmp, sys)...
-    , CRT, sys);
-gzSpoil = trap4ge(...
-    mr.scaleGrad(...
-    mr.makeTrapezoid('z', sys, 'Area', Nz*deltak(3)*NcyclesSpoil/tmp)...
-    , tmp, sys)...
-    , CRT, sys);
+% Spoilers (conventionally only in x and z because ??, might as well do so in y)
+gxSpoil = trap4ge(mr.makeTrapezoid('x', sys, ...
+    'Area', Nx*deltak(1)*NcyclesSpoil),CRT,sys);
+gySpoil = trap4ge(mr.makeTrapezoid('y', sys, ...
+    'Area', Ny*deltak(2)*NcyclesSpoil),CRT,sys);
+gzSpoil = trap4ge(mr.scaleGrad(...
+    mr.makeTrapezoid('z', sys, 'Area', Nz*deltak(3)*(NcyclesSpoil + 0.5)),...
+    NcyclesSpoil/(NcyclesSpoil + 0.5)),CRT,sys);
 
 %% Calculate delay to achieve desired TE
 minTE = 0.5*mr.calcDuration(rf)...
@@ -204,7 +200,7 @@ for frame = 1:Nframes
 
         % Fat-sat
         seq.addBlock(rfsat, mr.makeLabel('SET','TRID',TRID));
-        seq.addBlock(gxSpoil, gzSpoil);
+        seq.addBlock(gxSpoil, gySpoil, gzSpoil);
 
         % RF spoiling
         rf_phase = mod(0.5 * rf_phase_0 * rf_count^2, 360.0);
@@ -232,23 +228,38 @@ for frame = 1:Nframes
         seq.addBlock(gxPre, gyPreTmp, gzPreTmp);
 
         % Begin ky encoding
-        % Zip through k-space with EPI trajectory
-        seq.addBlock(gro1);
-        for echo = 1:(length(y_locs) - 1)
+        % first line
+        gyBlipTmp = mr.scaleGrad(gyBU, y_locs(2) - y_locs(1));
+        gzBlipTmp = mr.scaleGrad(gzBU, z_locs(2) - z_locs(1));
+        seq.addBlock(adc, gro, gyBlipTmp, gzBlipTmp);
+
+        % echo train
+        for echo = 2:(length(y_locs) - 1)
+            gyBlipTmp = mr.addGradients(...
+                        {mr.scaleGrad(gyBD, y_locs(echo) - y_locs(echo-1)),...
+                        mr.scaleGrad(gyBU, y_locs(echo+1) - y_locs(echo))},...
+                        sys);
+            gzBlipTmp = mr.addGradients(...
+                        {mr.scaleGrad(gzBD, z_locs(echo) - z_locs(echo-1)),...
+                        mr.scaleGrad(gzBU, z_locs(echo+1) - z_locs(echo))},...
+                        sys);
+
             seq.addBlock(adc, mr.scaleGrad(gro, (-1)^(echo-1)),...
-                mr.scaleGrad(gyBlip, y_locs(echo + 1) - y_locs(echo)),...
-                mr.scaleGrad(gzBlip, z_locs(echo + 1) - z_locs(echo))...
+                gyBlipTmp,...
+                gzBlipTmp...
                 );
         end
 
-        % Last line
-        seq.addBlock(adc, mr.scaleGrad(gro2, (-1)^echo));
+        % last line
+        gyBlipTmp = mr.scaleGrad(gyBD, y_locs(echo+1) - y_locs(echo));
+        gzBlipTmp = mr.scaleGrad(gzBD, z_locs(echo+1) - z_locs(echo));
+        seq.addBlock(adc, mr.scaleGrad(gro, (-1)^echo), gyBlipTmp, gzBlipTmp);
 
         % End ky encoding
 
-        % Spoilers
+        % Gx, Gz spoilers. Gy rewinder gradients
         seq.addBlock(gxSpoil, ...
-            mr.scaleGrad(gySpoil, -((y_locs(end) - Ny/2)*deltak(2))/gySpoil.area), ...
+            mr.scaleGrad(gySpoil, (gySpoil.area - (y_locs(end) - Ny/2)*deltak(2))/gySpoil.area), ...
             mr.scaleGrad(gzSpoil, (gzSpoil.area - (z_locs(end) - Nz/2)*deltak(3))/gzSpoil.area));
 
         % Achieve desired TR
@@ -265,11 +276,14 @@ if (ok)
 else        
     fprintf('Timing check failed! Error listing follows:\n');
     fprintf([error_report{:}]);
-    fprintf('\n');
+    fprintf('\n'); 
 end
 
 %% Save sampling locations for gridding
 save('samp_locs.mat', 'schedules', 'parts', '-v7.3');
+
+%% Plot in pulseq (no figure call needed)
+seq.plot('timeRange', [0 2*max(minTR, TR)], 'stacked', 1);
 
 %% Write to .seq file
 seq.setDefinition('FOV', fov);
@@ -286,32 +300,21 @@ g_max = 5;             % Gauss/cm
 slew_max = 20;         % Gauss/cm/ms
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
 
-% PNS channel/direction weights, less for L/R & S/I directions
-PNSwt = [0.8 1 0.7];
-% PNSwt = [0 0 0]; % for phantom
-
-% plot in pge2
-ceq = seq2ceq(seq);
-figure; S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', PNSwt);
-
-% check for forbidden gradient frequencies
-check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm', [0, 0]);
-
-% write to GE compatible file
+% Write to GE compatible file
 pislquant = 10; % Number of ADC events at start of scan for receive gain calibration
-pge_params = pge2.check(ceq, sysPGE2, 'wt', PNSwt);
-pge2.writeceq(ceq, [seqname '.pge'], 'pislquant', pislquant, 'params', pge_params);
+% PNSwt = [0.8 1 0.7]; % PNS channel/direction weights, less for L/R & S/I directions
+PNSwt = [0 0 0]; % for phantom
+pge2.seq2ge(fn_seq, sysPGE2, pislquant, PNSwt);
 
-return;
-
-%% Plot in pulseq (no figure call needed)
-seq.plot('timeRange', [0 max(minTR, TR)], 'stacked', 1);
-return;
+%% Plot in pge2
+ceq = seq2ceq(seq);
+figure;
+S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', [0.8 1 0.7]);
 
 %% Plot only gradients in pge2
 figure; plotPGE2grads(ceq, sysPGE2, 'blockRange', [1 10], 'showBlocks', true, 'rotate', false, 'interpolate', true, 'wt', [0.8 1 0.7]);
-
 return;
+
 %% Plot trajectories stringing together samples (takes a while)
 [ktraj_adc, t_adc, ktraj, t_ktraj, t_excitation, t_refocusing] = seq.calculateKspacePP();
 
@@ -377,6 +380,10 @@ title(sprintf('2D sampling mask. R = %d', round(R)), 'FontSize', 18);
 xlabel('k_y (m^{-1})', 'FontSize', 18); ylabel('k_z (m^{-1})', 'FontSize', 18);
 xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
 
+return;
+
+%% Check for forbidden gradient frequencies
+check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm');
 return;
 
 %% Detailed sequence report

@@ -84,11 +84,12 @@ else % biggest blip in z
     gyBlip = mr.scaleGrad(gyBlip, 1/max_ky_step, sys);
 end
 
-% Readout trapezoid
+% Readout trapezoid for ramp-sampling
 systmp = sys;
 systmp.maxGrad = deltak(1)/dwell;  % to ensure Nyquist sampling
-gro = mr.makeTrapezoid('x', systmp, 'Area', Nx*deltak(1) + maxBlipArea);
-gro = trap4ge(gro,CRT,sys);
+gro = trap4ge(...
+    mr.makeTrapezoid('x', systmp, 'area', Nx*deltak(1) + maxBlipArea)...
+    , CRT, sys);
 
 % Circularly shift gro waveform to contain blips within each block
 [gro1, gro2] = mr.splitGradientAt(gro, blipDuration/2);
@@ -99,7 +100,7 @@ gro1.delay = 0; % This piece is necessary at the very beginning of the readout
 
 % ADC event
 Tread = mr.calcDuration(gro) - blipDuration;
-Nfid = floor(Tread/dwell/4)*4;
+Nfid = round(Tread/dwell/4)*4;
 adc = mr.makeAdc(Nfid, 'Dwell', dwell);
 
 % Delay blips so they play after adc stops
@@ -107,18 +108,40 @@ gyBlip.delay = Tread;
 gzBlip.delay = Tread;
 
 % Prephasers (Make duration long enough to support all 3 directions)
-gxPre = trap4ge(mr.makeTrapezoid('x',sys,'Area',-(Nx*deltak(1) + maxBlipArea)/2),CRT,sys);
-gyPre = trap4ge(mr.makeTrapezoid('y',sys,'Area',-Ny/2*deltak(2)),CRT,sys);
-gzPre = trap4ge(mr.makeTrapezoid('z',sys,'Area',-Nz/2*deltak(3)),CRT,sys);
+tmp = 0.5; % temporary scale factor <1 (to avoid PNS issues)
+gxPre = trap4ge(...
+    mr.scaleGrad(...
+    mr.makeTrapezoid('x',sys,'Area',-Nx/2*deltak(1)/tmp)...
+    , tmp, sys)...
+    , CRT, sys);
+gyPre = trap4ge(...
+    mr.scaleGrad(...
+    mr.makeTrapezoid('y',sys,'Area',-Ny/2*deltak(2)/tmp)...
+    , tmp, sys)...
+    , CRT, sys);
+gzPre = trap4ge(...
+    mr.scaleGrad(...
+    mr.makeTrapezoid('z',sys,'Area',-Nz/2*deltak(3)/tmp)...
+    , tmp, sys)...
+    , CRT, sys);
 
-% Spoilers (conventionally only in x and z because ??, might as well do so in y)
-gxSpoil = trap4ge(mr.makeTrapezoid('x', sys, ...
-    'Area', Nx*deltak(1)*NcyclesSpoil),CRT,sys);
-gySpoil = trap4ge(mr.makeTrapezoid('y', sys, ...
-    'Area', Ny*deltak(2)*NcyclesSpoil),CRT,sys);
-gzSpoil = trap4ge(mr.scaleGrad(...
-    mr.makeTrapezoid('z', sys, 'Area', Nz*deltak(3)*(NcyclesSpoil + 0.5)),...
-    NcyclesSpoil/(NcyclesSpoil + 0.5)),CRT,sys);
+% Spoilers
+tmp = 0.5; % temporary scale factor <1 (to avoid PNS issues)
+gxSpoil = trap4ge(...
+    mr.scaleGrad(...
+    mr.makeTrapezoid('x', sys, 'Area', Nx*deltak(1)*NcyclesSpoil/tmp)...
+    , tmp, sys)...
+    , CRT, sys);
+gySpoil = trap4ge(...
+    mr.scaleGrad(...
+    mr.makeTrapezoid('y', sys, 'Area', Ny*deltak(2)*NcyclesSpoil/tmp)...
+    , tmp, sys)...
+    , CRT, sys);
+gzSpoil = trap4ge(...
+    mr.scaleGrad(...
+    mr.makeTrapezoid('z', sys, 'Area', Nz*deltak(3)*NcyclesSpoil/tmp)...
+    , tmp, sys)...
+    , CRT, sys);
 
 %% Calculate delay to achieve desired TE
 minTE = 0.5*mr.calcDuration(rf)...
@@ -247,9 +270,6 @@ kxe = ktraj_adc(1, Nfid+1:Nfid*2);
 
 save(sprintf('kxoe%d.mat', Nx),'kxo','kxe','-v7.3');
 
-%% Plot in pulseq
-f = seq.plot('timeRange', [0 2*max(minTR, TR)], 'stacked', 1);
-
 %% Write to .seq file
 seq.setDefinition('FOV', fov);
 seq.setDefinition('Name', seqname);
@@ -265,17 +285,26 @@ g_max = 5;             % Gauss/cm
 slew_max = 20;         % Gauss/cm/ms
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
 
-% Write to GE compatible file
-pislquant = 10; % Number of ADC events at start of scan for receive gain calibration
-PNSwt = [0.8 1 0.7]; % PNS channel/direction weights, less for L/R & S/I directions
-PNSwt = [0 0 0]; % for phantom
-pge2.seq2ge(fn_seq, sysPGE2, pislquant, PNSwt);
+% PNS channel/direction weights, less for L/R & S/I directions
+PNSwt = [0.8 1 0.7];
+% PNSwt = [0 0 0]; % for phantom
 
-%% Check for forbidden gradient frequencies
+% plot in pge2
 ceq = seq2ceq(seq);
-S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', [0.8 1 0.7]);
-check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm');
+figure; S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', PNSwt);
+
+% check for forbidden gradient frequencies
+check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm', [0, 0]);
+
+% write to GE compatible file
+pislquant = 10; % Number of ADC events at start of scan for receive gain calibration
+pge_params = pge2.check(ceq, sysPGE2, 'wt', PNSwt);
+pge2.writeceq(ceq, [seqname '.pge'], 'pislquant', pislquant, 'params', pge_params);
+
 return;
+
+%% Plot in pulseq
+f = seq.plot('timeRange', [0 max(minTR, TR)], 'stacked', 1);
 
 %% Detailed sequence report
 % Slow but useful for testing during development,
