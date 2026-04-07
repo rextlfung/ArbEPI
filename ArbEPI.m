@@ -5,7 +5,7 @@
 run('params.m');
 
 %% Path and options
-seqname = 'anyEPI';
+seqname = 'ArbEPI';
 
 %% Excitation pulse
 % Target a slightly thinner slice to alleviate aliasing

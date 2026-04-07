@@ -1,9 +1,9 @@
-# anyEPI: matlab/pulseq code for generating 3D-EPI sequences from arbitrary 2D sampling masks in the phase-encode-partition (ky-kz) plane
+# ArbEPI: matlab/pulseq code for generating 3D-EPI sequences from arbitrary 2D sampling masks in the phase-encode-partition (ky-kz) plane
 ![An example of a Poisson-Disc 3D-EPI trajectory and corresponding PSF.](poisson3DEPI.png)
 
 ## Getting started
 1. Set experimental parameters in ```params.m```. I recommend making a copy of this file for each experiment for reconstruction afte the scan.
-2. Run ```anyEPI.m``` to generate ```anyEPI.seq``` and ```anyEPI.pge```. Plug in your custom 2D sampling mask (```omega```) the section at line 44. TODO: move sampling mask selection to somewhere that's not them middle of the script.  
+2. Run ```ArbEPI.m``` to generate ```ArbEPI.seq``` and ```ArbEPI.pge```. Plug in your custom 2D sampling mask (```omega```) the section at line 44. TODO: move sampling mask selection to somewhere that's not them middle of the script.  
     a. Also generates ```samp_locs.mat```, which saves the sampling schedule for use during reconstruction.
 3. Run ```EPIcal.m``` to generate ```EPIcal.seq``` and ```EPIcal.pge```. This sequence contains dummy excitations and blipless EPI trains for: 1) setting receiver gain and 2) odd/even and linear phase correction.  
     a. Also generates ```kxoe$Nx.mat```, which saves the odd/even locations for use during reconstruction.
@@ -13,7 +13,7 @@
 1. Set up ```.pge``` files by following: https://github.com/jfnielsen/TOPPEpsdSourceCode/tree/UserGuide/v7#running-a-sequence-on-the-scanner (private repo).
 2. Run a localizer sequence.
 3. Run ```EPIcal.pge``` using auto-prescan.
-4. Run ```anyEPI.pge``` using manual-prescan, keeping the same receiver gain settings from the last step.
+4. Run ```ArbEPI.pge``` using manual-prescan, keeping the same receiver gain settings from the last step.
 5. (optional) Run ```GRE.pge``` using auto-prescan.
 
 ## Methods overview
