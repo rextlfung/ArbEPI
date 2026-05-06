@@ -60,7 +60,7 @@ Nframes = round((duration + discardDuration)/volumeTR);
 Ndummyshots = round(discardDuration/TR); % dummy shots to reach steady state for calibration
 
 % Exciting stuff
-alpha = 180/pi * acos(exp(-TR/T1)); % Ernst angle (degrees)
+fa = 180/pi * acos(exp(-TR/T1)); % flip angle, Ernst angle (degrees)
 rfDur = 2e-3;                       % RF pulse duration (s)
 rfTB  = 6;                          % RF pulse time-bandwidth product
 rf_phase_0 = 117;                   % RF spoiling initial phase (degrees)
@@ -95,3 +95,23 @@ alpha_gre = 180/pi*acos(exp(-TR_gre/T1_gre)); % flip angle (degrees)
 rfDur_gre = 0.4e-3;  % RF duration
 nCyclesSpoil = 2; % number of spoiler cycles
 Tpre = 1.0e-3; % prephasing trapezoid duration
+
+%% Noise prescan parameters
+Ncoils = 32; % number of receive coils
+
+%% Output directory for generated sequence and data files
+outputDir = 'output';
+
+%% GE MR750 scanner hardware parameters
+psd_rf_wait  = 150e-6;     % RF-gradient delay (s)
+psd_grd_wait = 120e-6;     % ADC-gradient delay (s)
+b1_max       = 0.25;       % max B1 (Gauss)
+g_max        = 5;          % max gradient amplitude (Gauss/cm)
+slew_max     = 20;         % max slew rate (Gauss/cm/ms)
+PNSwt        = [0.8 1 0.7]; % PNS direction weights [x, y, z]
+pislquant    = 10;         % ADC events for receive gain calibration
+
+%% Sampling mask parameters
+samplingMethod = 'pd'; % 'caipi' | 'pd' | 'rand'
+caipiR     = [3, 2];      % CAIPI acceleration factors [Ry, Rz]
+caipiShift = 3;           % CAIPI z-shift

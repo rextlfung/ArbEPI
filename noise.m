@@ -1,47 +1,57 @@
-%% Noise prescan for noise-prewhitening
-% Rex Fung
+function noise()
+%% noise  Noise prescan for receiver noise covariance estimation.
+%
+% Acquires ADC data without RF or gradients to measure the noise
+% covariance matrix used for noise prewhitening during reconstruction.
+%
+% Requires samp_locs.mat from a prior ArbEPI run to match readout geometry.
+%
+% Outputs: noise.seq  (Pulseq format)
+%          noise.pge  (GE TOPPE format)
 
-%% Define experiment parameters
-run('params.m');
-Ncoils = 32;
+%% Parameters
+projRoot = fileparts(mfilename('fullpath'));
+addpath(projRoot);
+addpath(fullfile(projRoot, 'lib'));
+params;
 
-%% Path and options
 seqname = 'noise';
 
-%% Calculate number of samples needed for noise scan
+%% Rebuild readout gradient objects matching the EPI sequence
+load(fullfile(outputDir, 'samp_locs.mat'), 'schedules');
+max_ky_step = max(abs(diff(schedules(:,:,:,1), 1, 3)), [], 'all');
+max_kz_step = max(abs(diff(schedules(:,:,:,2), 1, 3)), [], 'all');
+rg = make_readout_grads(max_ky_step, max_kz_step, Nx, fov, dwell, sys, CRT);
+[rf, ~, ~] = make_excitation_pulse(fa, rfDur, rfTB, fov, sys, CRT); 
+
+%% Calculate number of ADC repetitions needed
 Nsamples_noise = 20 * Ncoils^2;
-Nreps = ceil(Nsamples_noise / Nfid);
+Nreps = ceil(Nsamples_noise / rg.Nfid);
 
-%% Calculate delay needed to match TR
-% manually set to 0 to avoid annoying warnings. 
-% Shouldn't be a problem since I don't have back-to-back blocks with adc.
-sys.adcDeadTime = 0;
+%% Calculate delay to pad each block to EPI readout duration
+sys.adcDeadTime = 0; % suppress warnings; no back-to-back ADC blocks
+adc_total_dur = sys.adcDeadTime + mr.calcDuration(rg.adc);
+pad_duration  = mr.calcDuration(rg.gro) - adc_total_dur;
 
-adc_total_dur = sys.adcDeadTime + mr.calcDuration(adc); % total ADC event duration
-pad_duration  = mr.calcDuration(gro) - adc_total_dur;
-
-if pad_duration > 1e-9   % only add if non-trivial
+if pad_duration > 1e-9
     delay_block = mr.makeDelay(pad_duration);
 else
     delay_block = [];
 end
 
-%% Assemble sequence using parts from anyEPI.m
+%% Assemble sequence
 seq = mr.Sequence(sys);
 for rep = 1:Nreps
+    seq.addBlock(rg.adc, mr.makeLabel('SET', 'TRID', 1));
     if ~isempty(delay_block)
-        % Label the first block in each "unique" section with TRID (see Pulseq on GE manual)
-        seq.addBlock(adc, mr.makeLabel('SET','TRID',1));
         seq.addBlock(delay_block);
-    else
-        seq.addBlock(adc, mr.makeLabel('SET','TRID',1));
     end
 end
 
-%% Add dummy rf pulse at the end to make scanner happy
-seq.addBlock(rf, mr.makeLabel('SET','TRID',2));
+% Dummy RF pulse at end so the scanner recognises a second block type
+seq.addBlock(rf, mr.makeLabel('SET', 'TRID', 2));
 
-%% Validate sequence
+%% Check sequence timing
 fprintf('Validating sequence...\n');
 [ok, errorReport] = seq.checkTiming();
 if ok
@@ -52,27 +62,18 @@ else
     fprintf('\n');
 end
 
-%% Write to .seq file
-fn_seq = strcat(seqname, '.seq');
+%% Write Pulseq .seq file
+fn_seq = fullfile(outputDir, [seqname '.seq']);
 seq.write(fn_seq);
 fprintf('Sequence written to: %s\n', fn_seq);
 
-%% Interpret to GE via TOPPE
-% Define hardware parameters for MR750 scanner
-psd_rf_wait = 150e-6;  % RF-gradient delay (s)
-psd_grd_wait = 120e-6; % ADC-gradient delay (s)
-b1_max = 0.25;         % Gauss
-g_max = 5;             % Gauss/cm
-slew_max = 20;         % Gauss/cm/ms
+%% Write GE TOPPE .pge file
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
-
-% Write to GE compatible file
-pislquant = 10; % Number of ADC events at start of scan for receive gain calibration
-PNSwt = [0.8 1 0.7]; % PNS channel/direction weights, less for L/R & S/I directions
-% PNSwt = [0 0 0]; % for phantom
 pge2.seq2ge(fn_seq, sysPGE2, pislquant, PNSwt);
 
 %% Quick plot
 n_plot = min(10, Nreps);
 fprintf('Plotting first %d blocks...\n', n_plot);
-seq.plot('TimeRange', [0, n_plot * mr.calcDuration(gro)]);
+seq.plot('TimeRange', [0, n_plot * mr.calcDuration(rg.gro)]);
+
+end % noise

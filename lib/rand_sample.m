@@ -10,10 +10,14 @@ function mask = rand_sample(dims, R, pdf_in)
 % Output:
 %   mask:   Logical matrix of size [Nx, Ny]
 
-    % 1. Unpack dimensions
+    % 1. Unpack and validate dimensions
+    assert(isnumeric(dims) && numel(dims) == 2 && all(dims >= 1), ...
+           'dims must be a 2-element vector of positive integers.');
+    assert(isnumeric(R) && isscalar(R) && R >= 1, ...
+           'R must be a scalar acceleration factor >= 1.');
     Nx = dims(1);
     Ny = dims(2);
-    
+
     % 2. Calculate required sample count
     total_points = Nx * Ny;
     num_samples = round(total_points / R);

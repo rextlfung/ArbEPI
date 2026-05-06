@@ -1,16 +1,20 @@
-%% mask2epi.m 
+%% mask2epi.m
 % Input arguments:
-% mask = 2D Cartesian sampling mask (ky x kz)
-% ETL = echo train legnth = number of samples per shot
+% mask   = 2D Cartesian sampling mask (ky x kz), logical
+% ETL    = echo train length = number of samples per shot
 % Nshots = number of shots/excitations per volume
 %
 % Output arguments:
-% schedule = schedule of (ky, kz) locations to sample
-% parts = partitionining of samples
+% schedule = Nshots x ETL x 2 array of (ky, kz) index locations
+% parts    = Ny x Nz partition map (which shot each sample belongs to)
 %
 function [schedule, parts] = mask2epi(mask, ETL, Nshots)
+    assert(islogical(mask) || isnumeric(mask), 'mask must be a 2D logical or numeric array.');
+    assert(ismatrix(mask), 'mask must be 2D (ky x kz).');
+    assert(ETL >= 1 && floor(ETL) == ETL, 'ETL must be a positive integer.');
+    assert(Nshots >= 1 && floor(Nshots) == Nshots, 'Nshots must be a positive integer.');
     assert(sum(mask, 'all') == Nshots*ETL, ...
-           'Number of samples must == Nshots*ETL')
+           'Number of samples (%d) must equal Nshots*ETL (%d).', sum(mask,'all'), Nshots*ETL);
 
     schedule = zeros(Nshots, ETL, 2); % preallocate output array
     
@@ -33,7 +37,7 @@ function [schedule, parts] = mask2epi(mask, ETL, Nshots)
         end
     end
 
-    % second pass, infer optimal schedul subject to
+    % second pass, infer optimal schedule subject to
     % 1. non-decreasing ky
     % 2. minimum distance traveled
     for shot = 1:Nshots
