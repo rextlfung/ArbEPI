@@ -80,5 +80,10 @@ According to compressed sensing, randomly sampling k-space results in incoherent
 5. Unsolved problems:
     - Acquisition speed is bottlenecked by large k-space jumps between EPI lines. Constraining jump size whilst preserving sampling incoherence is an ongoing research problem.
 
+## Notes
+The "Arb" in the package name has two meanings:\
+1. The framework accepts arbitrary sampling masks as input.
+2. The package was developed in Ann Arbor, Michigan.
+
 ## References
 1. Ong, F., & Lustig, M. (2019, May). SigPy: a python package for high performance iterative reconstruction. In Proceedings of the ISMRM 27th Annual Meeting, Montreal, Quebec, Canada (Vol. 4819, No. 5).
