@@ -80,6 +80,7 @@ for frame = 1:Nframes
 
         % EPI readout — zip through k-space with alternating readout polarity
         seq.addBlock(rg.gro1);
+        echo = 0; % initialize so (-1)^echo is valid when ETL=1 (empty loop)
         for echo = 1:(length(y_locs) - 1)
             seq.addBlock(rg.adc, mr.scaleGrad(rg.gro, (-1)^(echo-1)), ...
                 mr.scaleGrad(rg.gyBlip, y_locs(echo+1) - y_locs(echo)), ...

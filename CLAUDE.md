@@ -73,6 +73,13 @@ Do **not** use `run('params.m')` inside a function — MATLAB documents that `ru
 
 Avoid naming workspace variables after MATLAB built-in functions. For example, the EPI flip angle is `fa` (not `alpha`, which shadows the built-in `alpha()` transparency function and causes a runtime error).
 
+`params.m` defines two RF-timing variables with similar names — do not confuse them:
+
+- `rf_ringdown_margin` (200 µs) — extra margin added to Pulseq's `rfRingdownTime` to prevent RF-gradient overlap. Used only inside the `mr.opts(...)` call.
+- `psd_rf_wait` (150 µs) — GE MR750 hardware RF-gradient delay, defined in the GE hardware section. Passed to `pge2.opts(...)` in every sequence file.
+
+**`ticaipi_sample`** (`lib/ticaipi_sample.m`) accepts `(N, R, frame)` — not a pre-computed `shift_offset`. It derives `Rz` (the largest factor of `R` that is ≤ √R) internally and computes `shift_offset = mod(frame-1, Rz)`. Callers should pass the 1-based frame index directly.
+
 ### Output files
 
 All generated files go to `output/` (gitignored). Key files consumed by reconstruction:

@@ -77,6 +77,7 @@ for shot = -Ndummyshots+1:Nshots
 
     % EPI readout — same waveform as ArbEPI, blips scaled to zero
     seq.addBlock(rg.gro1);
+    echo = 0; % initialize so (-1)^echo is valid when ETL=1 (empty loop)
     for echo = 1:(ETL - 1)
         if ~isDummy
             seq.addBlock(rg.adc, mr.scaleGrad(rg.gro, (-1)^(echo-1)), ...

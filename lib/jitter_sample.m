@@ -40,8 +40,8 @@ function mask = jitter_sample(N, R, jitterGlobalShift)
         % Independent per-cell jitter: each base sample moves within its cell
         [base_iy, base_iz] = find(base);
         n_base = numel(base_iy);
-        dy_vec = randi([-floor(Ry/2), floor(Ry/2)], n_base, 1);
-        dz_vec = randi([-floor(Rz/2), floor(Rz/2)], n_base, 1);
+        dy_vec = randi([0, Ry-1], n_base, 1) - floor(Ry/2);
+        dz_vec = randi([0, Rz-1], n_base, 1) - floor(Rz/2);
         new_iy = mod(base_iy + dy_vec - 1, Ny) + 1;
         new_iz = mod(base_iz + dz_vec - 1, Nz) + 1;
         lin    = unique(sub2ind([Ny, Nz], new_iy, new_iz));

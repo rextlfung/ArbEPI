@@ -20,10 +20,7 @@ for frame = 1:Nframes
         case 'caipi'
             omegas(:,:,frame) = caipi_sample([Ny, Nz], R);
         case 'ticaipi'
-            Rz = floor(sqrt(R));
-            while mod(R, Rz) ~= 0, Rz = Rz - 1; end
-            shift_offset = mod(frame - 1, Rz);
-            omegas(:,:,frame) = ticaipi_sample([Ny, Nz], R, shift_offset);
+            omegas(:,:,frame) = ticaipi_sample([Ny, Nz], R, frame);
         case 'pd'
             omegas(:,:,frame) = pd_sample([Ny, Nz], R);
         case 'rand'

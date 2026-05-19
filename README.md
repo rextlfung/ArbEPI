@@ -2,7 +2,7 @@
 ![An example of a Poisson-Disc 3D-EPI trajectory and corresponding PSF.](poisson3DEPI.png)
 
 ## Background
-According to compressed sensing, randomly sampling k-space results in incoherent interference in some sparse transform domain e.g. wavelets. This effectively turns the dealiasing problem into a denoising problem, thus allowing the image the be reconstructed from sub-Nyquist sampled k-space. The same principles can be extended to dynamic MRI, where the desired image, when reshaped into a (space x time) matrix, is low-rank in applications like fMRI. By definition, a low-rank matrix is sparse in the singular value domain, thus we want aliasing artifacts that are dense in the singular value domain i.e. high-rank or noise-like when reshaped into a (space x time) matrix. This can be achieved by randomly sampling k-t-space, but there are two obstacles: 1. It is unclear what is the best random sampling strategy. 2. It is technically nontrivial to program the MRI scanner randomly sample k-space. To address these challenges, we present ArbEPI, a framework that accepts arbitrary 2D sampling masks in the phase-encoding-partition (ky-kz) plane and creates fast vendor-agnostic 3D-EPI sequences using the open-source Pulseq library. Examples include: CAIPI sampling, Poisson-Disc random sampling, Gaussian random sampling, and uniform random sampling. Tested on GE scanners.
+According to compressed sensing, randomly sampling k-space results in incoherent interference in some sparse transform domain e.g. wavelets. This effectively turns the dealiasing problem into a denoising problem, thus allowing the image the be reconstructed from sub-Nyquist sampled k-space. The same principles can be extended to dynamic MRI, where the desired image, when reshaped into a (space x time) matrix, is low-rank in applications like fMRI. By definition, a low-rank matrix is sparse in the singular value domain, thus we want aliasing artifacts that are dense in the singular value domain i.e. high-rank or noise-like when reshaped into a (space x time) matrix. This can be achieved by randomly sampling k-t-space, but there are two obstacles: 1. It is unclear what is the best random sampling strategy. 2. It is technically nontrivial to program the MRI scanner randomly sample k-space. To address these challenges, we present ArbEPI, a framework that accepts arbitrary 2D sampling masks in the phase-encoding-partition (ky-kz) plane and creates fast vendor-agnostic 3D-EPI sequences using the open-source Pulseq library. Examples include: CAIPI, temporally-interleaved CAIPI (TI-CAIPI), Poisson-disc, Gaussian random, uniform random, golden-angle radial, and jittered-grid sampling. Tested on GE scanners.
 
 ## Getting started
 1. Set experimental parameters in `params.m`. The sampling method (`samplingMethod`) and GE hardware constants are also configured here. Make a copy of this file for each experiment to preserve parameters for reconstruction.
@@ -49,9 +49,13 @@ According to compressed sensing, randomly sampling k-space results in incoherent
 |------|---------|
 | `mask2epi.m` | Core algorithm: partition 2D mask into efficient EPI trajectories |
 | `caipi_sample.m` | Regular CAIPI-shifted sampling masks |
+| `ticaipi_sample.m` | Temporally-interleaved CAIPI masks (golden-angle frame rotation) |
 | `pd_sample.m` | Variable-density Poisson-disc sampling masks [1] |
 | `rand_sample.m` | Weighted random sampling masks |
+| `radial_sample.m` | Golden-angle stack-of-stars Cartesian approximation masks |
+| `jitter_sample.m` | Jittered-grid sampling masks |
 | `gen_gaussian_pdf.m` | 2D Gaussian probability density for use with `rand_sample` |
+| `make_calib_mask.m` | Fully-sampled calibration region for use with `radial_sample` |
 | `make_fatsat_rf.m` | Create fat-saturation RF pulse object |
 | `make_excitation_pulse.m` | Create slab-selective sinc excitation pulse |
 | `make_readout_grads.m` | Create EPI readout gradients, blips, and ADC event |
@@ -68,8 +72,11 @@ According to compressed sensing, randomly sampling k-space results in incoherent
 1. The core logic is in `mask2epi()`, which accepts any 2D sampling mask of size `(Ny, Nz)` and partitions it into efficient 3D-EPI trajectories given the echo train length and number of shots.
 2. Sampling mask generators:
     - `caipi_sample()` — uniformly spaced, CAIPI-shifted masks.
+    - `ticaipi_sample()` — temporally-interleaved CAIPI; the CAIPI shift rotates each frame to improve temporal incoherence.
     - `pd_sample()` — variable-density Poisson-disc masks based on the SigPy implementation [1].
     - `rand_sample()` — random masks weighted by a 2D probability mass function (e.g. `gen_gaussian_pdf()`).
+    - `radial_sample()` — Cartesian approximation of a stack-of-stars trajectory; spoke angles follow the golden angle across frames.
+    - `jitter_sample()` — regular undersampled grid with a random integer shift each frame; global-shift mode preserves inter-sample spacing, per-cell mode adds independent per-sample jitter.
     - All methods are dispatched through `gen_sampling_masks(R)` via the `samplingMethod` parameter in `params.m`.
 3. Trajectory generation details:
     - Samples near ky = 0 are distributed evenly across the echo train (center-out ordering) so that the effective echo time is approximately constant across shots.
