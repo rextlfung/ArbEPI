@@ -52,7 +52,7 @@ TR = volumeTR / Nshots; % repetition time (s)
 T1 = 1.3; % T1 (s)
 
 % Number of frames to write in sequence, which is then looped on the scanner
-duration = 300; % experiment duration (s)
+duration = 0; % experiment duration (s)
 discardDuration = 9.6; % instructional duration to be discarded (s)
 Nframes = round((duration + discardDuration)/volumeTR);
 
@@ -112,6 +112,11 @@ PNSwt        = [0.8 1 0.7]; % PNS direction weights [x, y, z]
 pislquant    = 10;         % ADC events for receive gain calibration
 
 %% Sampling mask parameters
-samplingMethod = 'pd'; % 'caipi' | 'pd' | 'rand'
-caipiR     = [3, 2];      % CAIPI acceleration factors [Ry, Rz]
-caipiShift = 3;           % CAIPI z-shift
+% 'caipi' | 'ticaipi' | 'pd' | 'rand' | 'radial' | 'jitter'
+samplingMethod = 'jitter';
+
+% Cartesian radial / hub-spoke sampling (radial)
+radialCalib = 0;          % calibration region half-size in samples (0 = disabled)
+
+% Jittered-grid sampling (jitter)
+jitterGlobalShift = true; % true = same shift for all cells; false = per-cell jitter

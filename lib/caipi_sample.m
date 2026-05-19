@@ -2,27 +2,33 @@
 %
 % Generate regular CAIPI shifted 2D sampling mask
 %
-% Last modified Oct 23rd, 2025. Rex Fung
+% Last modified May 14th, 2026. Rex Fung
 
-function omega = caipi_sample(N, R, caipi_z)
-    % Unpack input arguments
+function omega = caipi_sample(N, R, shift_offset)
+    if nargin < 3, shift_offset = 0; end
+
     Ny = N(1); Nz = N(2);
-    Ry = R(1); Rz = R(2);
-    
-    % Validate input arguments
-    assert(Ny >= 1 && Nz >= 1, ...
-           'Dimensions must be >= 1');
-    assert(Ry >= 1 && Rz >= 1 && round(Ry) == Ry && round(Rz) == Rz, ...
-           'Acceleration factors must be an integer >= 1');
-        assert(round(caipi_z) == caipi_z && caipi_z >= 1, ...
-           'caipi_z must be an integer >= 1');
 
-    % Create sampling mask
+    assert(Ny >= 1 && Nz >= 1, 'Dimensions must be >= 1');
+    assert(R >= 1 && round(R) == R, 'R must be a positive integer');
+    assert(round(shift_offset) == shift_offset && shift_offset >= 0, ...
+           'shift_offset must be a non-negative integer');
+
+    % Most balanced factorization Ry * Rz = R, with Rz <= sqrt(R)
+    Rz = floor(sqrt(R));
+    while mod(R, Rz) ~= 0
+        Rz = Rz - 1;
+    end
+    Ry = R / Rz;
+    caipi_z = Rz;
+
     omega = zeros(Ny, Nz);
     omega(1:Ry:Ny, 1:Rz:Nz) = 1;
 
-    % Apply CAIPI shifts
     for z = 1:caipi_z
-        omega(:, (1+Rz*(z-1)):caipi_z*Rz:Nz) = circshift(omega(:, (1+Rz*(z-1)):caipi_z*Rz:Nz), z-1, 1); 
+        shift_amount = mod(z - 1 + shift_offset, caipi_z);
+        cols = (1 + Rz*(z-1)) : caipi_z*Rz : Nz;
+        if isempty(cols), continue; end
+        omega(:, cols) = circshift(omega(:, cols), shift_amount, 1);
     end
-end 
+end

@@ -2,7 +2,7 @@
 ![An example of a Poisson-Disc 3D-EPI trajectory and corresponding PSF.](poisson3DEPI.png)
 
 ## Background
-According to compressed sensing, randomly sampling k-space results in incoherent interference in some sparse transform domain e.g. wavelets. This effectively turns the dealiasing problem into a denoising problem, thus allowing the image the be reconstructed from sub-Nyquist sampled k-space. The same principles can be extended to dynamic MRI, where the desired image, when reshaped into a (space x time) matrix, is low-rank in applications like fMRI. By definition, a low-rank matrix is sparse in the singular value domain, thus we want aliasing artifacts that are dense in the singular value domain i.e. high-rank or noise-like when reshaped into a (space x time) matrix. This can be achieved by randomly sampling k-t-space, but there are two obstacles: 1. It is unclear what is the best random sampling strategy. 2. It is technically nontrivial to program the MRI scanner randomly sample k-space. To address these challenges, we present ArbEPI, a framework that accepts arbitrary 2D sampling masks in the phase-encoding-partition (ky-kz) plane and creates fast vendor-agnostic 3D-EPI sequences using the open-source Pulseq library. Examples include: CAIPI sampling, Poisson-Disc random sampling, Gaussian random sampling, and uniform random sampling.
+According to compressed sensing, randomly sampling k-space results in incoherent interference in some sparse transform domain e.g. wavelets. This effectively turns the dealiasing problem into a denoising problem, thus allowing the image the be reconstructed from sub-Nyquist sampled k-space. The same principles can be extended to dynamic MRI, where the desired image, when reshaped into a (space x time) matrix, is low-rank in applications like fMRI. By definition, a low-rank matrix is sparse in the singular value domain, thus we want aliasing artifacts that are dense in the singular value domain i.e. high-rank or noise-like when reshaped into a (space x time) matrix. This can be achieved by randomly sampling k-t-space, but there are two obstacles: 1. It is unclear what is the best random sampling strategy. 2. It is technically nontrivial to program the MRI scanner randomly sample k-space. To address these challenges, we present ArbEPI, a framework that accepts arbitrary 2D sampling masks in the phase-encoding-partition (ky-kz) plane and creates fast vendor-agnostic 3D-EPI sequences using the open-source Pulseq library. Examples include: CAIPI sampling, Poisson-Disc random sampling, Gaussian random sampling, and uniform random sampling. Tested on GE scanners.
 
 ## Getting started
 1. Set experimental parameters in `params.m`. The sampling method (`samplingMethod`) and GE hardware constants are also configured here. Make a copy of this file for each experiment to preserve parameters for reconstruction.
@@ -81,7 +81,7 @@ According to compressed sensing, randomly sampling k-space results in incoherent
     - Acquisition speed is bottlenecked by large k-space jumps between EPI lines. Constraining jump size whilst preserving sampling incoherence is an ongoing research problem.
 
 ## Notes
-The "Arb" in the package name has two meanings:\
+The "Arb" in the package name has two meanings:
 1. The framework accepts arbitrary sampling masks as input.
 2. The package was developed in Ann Arbor, Michigan.
 
