@@ -6,6 +6,7 @@
 % Order matters: ArbEPI must run first because EPIcal and noise load
 % samp_locs.mat that it produces.
 
+clear; close all;
 projRoot = fileparts(mfilename('fullpath'));
 addpath(projRoot);
 addpath(fullfile(projRoot, 'lib'));
@@ -13,6 +14,7 @@ params;
 
 %% 1. Generate sampling masks and main EPI sequence
 omegas = gen_sampling_masks(R);
+plot_kt_mask(omegas);
 ArbEPI(omegas);
 
 %% 2. Calibration sequence (ghost correction + receiver gain)
@@ -23,3 +25,4 @@ GRE();
 
 %% 4. Noise prescan (noise covariance)
 noise();
+ 

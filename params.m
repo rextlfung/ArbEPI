@@ -53,8 +53,8 @@ TR = volumeTR / Nshots; % repetition time (s)
 T1 = 1.3; % T1 (s)
 
 % Number of frames to write in sequence, which is then looped on the scanner
-duration = 0; % experiment duration (s)
-discardDuration = 9.6; % instructional duration to be discarded (s)
+duration = 4.8; % experiment duration (s)
+discardDuration = 0; % instructional duration to be discarded (s)
 Nframes = round((duration + discardDuration)/volumeTR);
 
 % Dummy parameters
@@ -114,7 +114,7 @@ pislquant    = 10;         % ADC events for receive gain calibration
 
 %% Sampling mask parameters
 % 'caipi' | 'ticaipi' | 'pd' | 'rand' | 'radial' | 'jitter'
-samplingMethod = 'jitter';
+samplingMethod = 'ticaipi';
 
 % Cartesian radial / hub-spoke sampling (radial)
 radialCalib = 0;          % calibration region half-size in samples (0 = disabled)

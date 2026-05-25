@@ -123,6 +123,57 @@ seq.write(fullfile(outputDir, [seqname '.seq']));
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
 write_to_ge(seq, fullfile(outputDir, seqname), sysPGE2, PNSwt, pislquant);
 
+%% K-space trajectory and sampling mask for frame 1
+blocks_per_frame = round(length(seq.blockDurations) / Nframes);
+[ktraj_adc, t_adc, ktraj, t_ktraj, t_excitation] = ...
+    seq.calculateKspacePP('blockRange', [1, blocks_per_frame]);
+
+deltak = 1./fov;
+
+% Sampling mask
+[kys, kzs] = meshgrid(-Ny*deltak(2)/2:deltak(2):Ny*deltak(2)/2, ...
+    -Nz*deltak(3)/2:deltak(3):Nz*deltak(3)/2);
+figure; hold on;
+hx = plot([-Ny*deltak(2)/2, Ny*deltak(2)/2], [0 0], '-k');
+hy = plot([0 0], [-Nz*deltak(3)/2, Nz*deltak(3)/2], '-k');
+uistack(hx, 'bottom'); uistack(hy, 'bottom');
+plot(kys(:), kzs(:), '.', 'Color', [0.7 0.7 0.7], 'MarkerSize', 12);
+plot(ktraj_adc(2,:), ktraj_adc(3,:), 'r.', 'MarkerSize', 12);
+axis equal; set(gca, 'FontSize', 20);
+title(sprintf('2D sampling mask. R = %d', round(R)), 'FontSize', 40);
+xlabel('k_y (m^{-1})', 'FontSize', 30); ylabel('k_z (m^{-1})', 'FontSize', 30);
+xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
+
+% Trajectory
+figure; hold on;
+for i = 1:Nshots
+    t_start = t_excitation(i);
+    if i < length(t_excitation)
+        t_end = t_excitation(i+1);
+    else
+        t_end = t_adc(end) + 1e-6;
+    end
+    adc_mask = t_adc >= t_start & t_adc < t_end;
+    t_adc_segment = t_adc(adc_mask);
+    adc_indices = arrayfun(@(t) find(abs(t_ktraj - t) < 1e-9, 1, 'first'), t_adc_segment);
+    ktraj_segment = ktraj(:, adc_indices);
+    if ~isempty(ktraj_segment)
+        plot(ktraj_segment(2,:), ktraj_segment(3,:), 'b', 'LineWidth', 1.5);
+    end
+end
+plot(ktraj_adc(2,:), ktraj_adc(3,:), 'r.', 'MarkerSize', 12);
+hx = plot([-Ny*deltak(2)/2, Ny*deltak(2)/2], [0 0], '-k');
+hy = plot([0 0], [-Nz*deltak(3)/2, Nz*deltak(3)/2], '-k');
+uistack(hx, 'bottom'); uistack(hy, 'bottom');
+axis equal; set(gca, 'FontSize', 20);
+title(sprintf('3D-EPI trajectory. R = %d', round(R)), 'FontSize', 40);
+xlabel('k_y (m^{-1})', 'FontSize', 30); ylabel('k_z (m^{-1})', 'FontSize', 30);
+xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
+
+%% Pulse sequence diagram
+seq.plot('timeRange', [0, TR], 'stacked', 1, 'showBlocks', 1);
+set(findall(gcf, 'Type', 'line'), 'LineWidth', 2);
+
 end % ArbEPI
 
 %% Local helper: run mask2epi for each frame

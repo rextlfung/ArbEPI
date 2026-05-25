@@ -10,7 +10,9 @@ function ceq = write_to_ge(seq, filepath, sysPGE2, PNSwt, pislquant)
 % (acoustics check, plotting).
 
 ceq = seq2ceq(seq);
-figure; S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', PNSwt);
+hfig = figure('Visible', 'off');
+S = pge2.plot(ceq, sysPGE2, 'blockRange', [1 10], 'rotate', false, 'interpolate', true, 'wt', PNSwt);
+close(hfig);
 
 % Check for forbidden gradient frequencies on GE MR750 (xrm)
 check_grad_acoustics(reshape([S.gx.signal S.gy.signal S.gz.signal], [length(S.gx.signal), 1, 3])/100, 'xrm', [0, 0]);

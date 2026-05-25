@@ -66,10 +66,10 @@ pe1Steps = ((0:Ny_gre-1) - Ny_gre/2) / Ny_gre * 2;
 pe2Steps = ((0:Nz_gre-1) - Nz_gre/2) / Nz_gre * 2;
 
 %% Calculate TE and TR delays
-TEmin = mr.calcDuration(rf)/2 + mr.calcDuration(gzSSR) ...
+TEmin = max(mr.calcDuration(rf), mr.calcDuration(gzSS))/2 + mr.calcDuration(gzSSR) ...
       + mr.calcDuration(gxPre) + adc.delay + Nx_gre/2*dwell;
 delayTE = ceil((TE_gre - TEmin) / seq.gradRasterTime) * seq.gradRasterTime;
-TRmin = mr.calcDuration(rf) + mr.calcDuration(gzSSR) ...
+TRmin = max(mr.calcDuration(rf), mr.calcDuration(gzSS)) + mr.calcDuration(gzSSR) ...
       + delayTE + mr.calcDuration(gxPre) ...
       + mr.calcDuration(gx) + mr.calcDuration(gxSpoil);
 delayTR = ceil((TR_gre - TRmin) / seq.gradRasterTime) * seq.gradRasterTime;
@@ -138,15 +138,6 @@ seq.write(fn_seq);
 %% Write GE TOPPE .pge file
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
 pge2.seq2ge(fn_seq, sysPGE2, pislquant, PNSwt);
-return;
 
-%% Plot in Pulseq viewer
-seq.plot('timeRange', [TR_gre*1000 TR_gre*1002], 'stacked', 1);
-return;
-
-%% Detailed sequence report (slow)
-rep = seq.testReport;
-fprintf([rep{[1:9, 11:end]}]); % skip warnings
-return;
 
 end % GRE

@@ -128,4 +128,7 @@ seq.write(fullfile(outputDir, [seqname '.seq']));
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
 write_to_ge(seq, fullfile(outputDir, seqname), sysPGE2, PNSwt, pislquant);
 
+seq.plot('timeRange', [0, TR], 'stacked', 1, 'showBlocks', 1);
+set(findall(gcf, 'Type', 'line'), 'LineWidth', 2);
+
 end % EPIcal

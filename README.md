@@ -62,6 +62,7 @@ According to compressed sensing, randomly sampling k-space results in incoherent
 | `make_prephasers.m` | Create x/y/z prephaser trapezoids |
 | `make_spoilers.m` | Create x/y/z spoiler trapezoids |
 | `calc_te_tr_delays.m` | Compute TE and TR padding delays |
+| `plot_kt_mask.m` | Interactive viewer for k-t sampling mask `(ky, kz, time)`; scroll wheel, slider, or arrow keys to scrub through frames |
 | `write_to_ge.m` | Convert Pulseq sequence to GE TOPPE format and write `.pge` |
 | `rf2pulseq.m` | Convert RF waveform from Gauss to Hz |
 | `check_grad_acoustics.m` | Check gradient waveforms for forbidden frequencies |

@@ -71,9 +71,5 @@ fprintf('Sequence written to: %s\n', fn_seq);
 sysPGE2 = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, 'xrm');
 pge2.seq2ge(fn_seq, sysPGE2, pislquant, PNSwt);
 
-%% Quick plot
-n_plot = min(10, Nreps);
-fprintf('Plotting first %d blocks...\n', n_plot);
-seq.plot('TimeRange', [0, n_plot * mr.calcDuration(rg.gro)]);
 
 end % noise

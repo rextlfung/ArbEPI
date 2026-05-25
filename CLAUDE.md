@@ -48,7 +48,7 @@ params.m  ──►  gen_sampling_masks(R)  ──►  omegas (Ny×Nz×Nframes l
 
 **`EPIcal`** mirrors `ArbEPI`'s gradient design exactly (same `rg`) but sets all blip scale factors to 0, so it acquires unencoded lines at k-space center for EPI ghost correction.
 
-**`write_to_ge`** (`lib/write_to_ge.m`) converts a Pulseq `mr.Sequence` to GE TOPPE `.pge` format. It also runs the acoustic frequency check and opens a plot of the first 10 blocks.
+**`write_to_ge`** (`lib/write_to_ge.m`) converts a Pulseq `mr.Sequence` to GE TOPPE `.pge` format. It also runs the acoustic frequency check. The `pge2.plot` call inside runs on a hidden figure (immediately closed) purely to obtain the gradient signal struct needed by `check_grad_acoustics` — it does not produce a visible plot.
 
 ### Toolchain
 
