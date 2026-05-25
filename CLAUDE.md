@@ -78,7 +78,7 @@ Avoid naming workspace variables after MATLAB built-in functions. For example, t
 - `rf_ringdown_margin` (200 µs) — extra margin added to Pulseq's `rfRingdownTime` to prevent RF-gradient overlap. Used only inside the `mr.opts(...)` call.
 - `psd_rf_wait` (150 µs) — GE MR750 hardware RF-gradient delay, defined in the GE hardware section. Passed to `pge2.opts(...)` in every sequence file.
 
-**`ticaipi_sample`** (`lib/ticaipi_sample.m`) accepts `(N, R, frame)` — not a pre-computed `shift_offset`. It derives `Rz` (the largest factor of `R` that is ≤ √R) internally and computes `shift_offset = mod(frame-1, Rz)`. Callers should pass the 1-based frame index directly.
+**`ticaipi_sample`** (`lib/ticaipi_sample.m`) accepts `(N, R, frame)` — not a pre-computed shift. Both `ticaipi_sample` and `caipi_sample` factor `R` into `Ry * Rz` using the most balanced split (start from `floor(sqrt(R))`, step down to find a divisor), then assign the **larger** factor to the **larger** dimension: if `Ny >= Nz` then `Ry = R/Rsmall`, `Rz = Rsmall`; otherwise swap. `ticaipi_sample` then maps `frame_idx = mod(frame-1, R)` to `kz_offset = mod(frame_idx, Rz)` and `y_shift = floor(frame_idx / Rz)`. Full k-space coverage across R frames is achieved by applying two independent global circshifts to a fixed CAIPI base pattern (`shift_offset = 0`): `kz_offset` shifts which kz columns are sampled (dim 2), and `y_shift` shifts which ky rows are sampled (dim 1). The `shift_offset` parameter in `caipi_sample` only rotates the CAIPI ky-offset assignment among kz column groups — it does NOT change which kz columns are sampled — so relying on it alone cannot produce full coverage. Callers should pass the 1-based frame index directly.
 
 ### Output files
 

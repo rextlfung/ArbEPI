@@ -14,13 +14,18 @@ function omega = caipi_sample(N, R, shift_offset)
     assert(round(shift_offset) == shift_offset && shift_offset >= 0, ...
            'shift_offset must be a non-negative integer');
 
-    % Most balanced factorization Ry * Rz = R, with Rz <= sqrt(R)
-    Rz = floor(sqrt(R));
-    while mod(R, Rz) ~= 0
-        Rz = Rz - 1;
+    % Most balanced factorization Ry * Rz = R; larger factor goes to larger dim
+    Rsmall = floor(sqrt(R));
+    while mod(R, Rsmall) ~= 0
+        Rsmall = Rsmall - 1;
     end
-    Ry = R / Rz;
-    caipi_z = Rz;
+    Rlarge = R / Rsmall;
+    if Ny >= Nz
+        Ry = Rlarge; Rz = Rsmall;
+    else
+        Ry = Rsmall; Rz = Rlarge;
+    end
+    caipi_z = Ry;
 
     omega = zeros(Ny, Nz);
     omega(1:Ry:Ny, 1:Rz:Nz) = 1;
