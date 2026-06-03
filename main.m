@@ -25,4 +25,3 @@ GRE();
 
 %% 4. Noise prescan (noise covariance)
 noise();
- 

@@ -32,6 +32,7 @@ function mask = pd_sample(img_shape, accel, varargin)
     p.addParameter('seed', 0, @isnumeric);
     p.addParameter('max_attempts', 30, @isnumeric);
     p.addParameter('tol', 0.1, @isnumeric);
+    p.addParameter('decay', 1.0, @(x) isnumeric(x) && isscalar(x) && x > 0);
     p.parse(img_shape, accel, varargin{:});
 
     calib = p.Results.calib;
@@ -40,6 +41,7 @@ function mask = pd_sample(img_shape, accel, varargin)
     seed = p.Results.seed;
     max_attempts = p.Results.max_attempts;
     tol = p.Results.tol;
+    decay = p.Results.decay;
 
     if accel <= 1
         error('accel must be greater than 1, got %f', accel);
@@ -81,8 +83,8 @@ function mask = pd_sample(img_shape, accel, varargin)
     for i = 1:50 
         slope = (slope_max + slope_min) / 2;
         
-        radius_x = max((1 + r * slope) * nx / max(nx, ny), 1);
-        radius_y = max((1 + r * slope) * ny / max(nx, ny), 1);
+        radius_x = max((1 + r.^(1/decay) * slope) * nx / max(nx, ny), 1);
+        radius_y = max((1 + r.^(1/decay) * slope) * ny / max(nx, ny), 1);
         
         mask = poisson_disc_core(nx, ny, max_attempts, radius_x, radius_y, calib, 0); % Use 0 seed inside loop
         

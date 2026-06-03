@@ -113,11 +113,13 @@ PNSwt        = [0.8 1 0.7]; % PNS direction weights [x, y, z]
 pislquant    = 10;         % ADC events for receive gain calibration
 
 %% Sampling mask parameters
-% 'caipi' | 'ticaipi' | 'pd' | 'rand' | 'radial' | 'jitter'
-samplingMethod = 'ticaipi';
+% 'caipi' | 'ticaipi' | 'pd' | 'rand'
+samplingMethod = 'pd';
 
-% Cartesian radial / hub-spoke sampling (radial)
-radialCalib = 0;          % calibration region half-size in samples (0 = disabled)
+% Poisson-disc sampling (pd)
+pdCalib      = [0, 0];  % fully-sampled calibration region [ny, nz] (0 = none)
+pdCropCorner = true;    % crop k-space corners (elliptical mask)
+pdDecay      = 1.0;     % density falloff exponent (1 = linear; >1 = steeper toward center)
 
-% Jittered-grid sampling (jitter)
-jitterGlobalShift = true; % true = same shift for all cells; false = per-cell jitter
+% Gaussian-weighted random sampling (rand)
+randGaussianSigma = [];  % sigma [sy, sz] for Gaussian pdf (empty = [Ny,Nz]/6)

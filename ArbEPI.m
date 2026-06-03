@@ -137,11 +137,11 @@ figure; hold on;
 hx = plot([-Ny*deltak(2)/2, Ny*deltak(2)/2], [0 0], '-k');
 hy = plot([0 0], [-Nz*deltak(3)/2, Nz*deltak(3)/2], '-k');
 uistack(hx, 'bottom'); uistack(hy, 'bottom');
-plot(kys(:), kzs(:), '.', 'Color', [0.7 0.7 0.7], 'MarkerSize', 12);
-plot(ktraj_adc(2,:), ktraj_adc(3,:), 'r.', 'MarkerSize', 12);
+plot(kys(:), kzs(:), '.', 'Color', [0.7 0.7 0.7], 'MarkerSize', 16);
+plot(ktraj_adc(2,:), ktraj_adc(3,:), 'r.', 'MarkerSize', 16);
 axis equal; set(gca, 'FontSize', 20);
 title(sprintf('2D sampling mask. R = %d', round(R)), 'FontSize', 40);
-xlabel('k_y (m^{-1})', 'FontSize', 30); ylabel('k_z (m^{-1})', 'FontSize', 30);
+xlabel('k_y (cycles/m)', 'FontSize', 30); ylabel('k_z (cycles/m)', 'FontSize', 30);
 xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
 
 % Trajectory
@@ -161,13 +161,13 @@ for i = 1:Nshots
         plot(ktraj_segment(2,:), ktraj_segment(3,:), 'b', 'LineWidth', 1.5);
     end
 end
-plot(ktraj_adc(2,:), ktraj_adc(3,:), 'r.', 'MarkerSize', 12);
+plot(ktraj_adc(2,:), ktraj_adc(3,:), 'r.', 'MarkerSize', 16);
 hx = plot([-Ny*deltak(2)/2, Ny*deltak(2)/2], [0 0], '-k');
 hy = plot([0 0], [-Nz*deltak(3)/2, Nz*deltak(3)/2], '-k');
 uistack(hx, 'bottom'); uistack(hy, 'bottom');
 axis equal; set(gca, 'FontSize', 20);
-title(sprintf('3D-EPI trajectory. R = %d', round(R)), 'FontSize', 40);
-xlabel('k_y (m^{-1})', 'FontSize', 30); ylabel('k_z (m^{-1})', 'FontSize', 30);
+title(sprintf('3D-EPI trajectory. ETL = %d', round(ETL)), 'FontSize', 40);
+xlabel('k_y (cycles/m)', 'FontSize', 30); ylabel('k_z (cycles/m)', 'FontSize', 30);
 xlim([-Ny*deltak(2)/2, Ny*deltak(2)/2]); ylim([-Nz*deltak(3)/2, Nz*deltak(3)/2]);
 
 %% Pulse sequence diagram

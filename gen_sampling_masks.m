@@ -13,6 +13,10 @@ addpath(projRoot);
 addpath(fullfile(projRoot, 'lib'));
 params;
 
+if isempty(randGaussianSigma)
+    randGaussianSigma = [Ny, Nz] ./ 6;
+end
+
 omegas = false(Ny, Nz, Nframes);
 for frame = 1:Nframes
     rng(frame); % deterministic per-frame seed for reproducibility
@@ -22,16 +26,13 @@ for frame = 1:Nframes
         case 'ticaipi'
             omegas(:,:,frame) = ticaipi_sample([Ny, Nz], R, frame);
         case 'pd'
-            omegas(:,:,frame) = pd_sample([Ny, Nz], R);
+            omegas(:,:,frame) = pd_sample([Ny, Nz], R, ...
+                'calib', pdCalib, 'crop_corner', pdCropCorner, 'decay', pdDecay);
         case 'rand'
-            weights = gen_gaussian_pdf([Ny, Nz], [Ny, Nz]./10);
+            weights = gen_gaussian_pdf([Ny, Nz], randGaussianSigma);
             omegas(:,:,frame) = rand_sample([Ny, Nz], R, weights);
-        case 'radial'
-            omegas(:,:,frame) = radial_sample([Ny, Nz], R, frame, radialCalib);
-        case 'jitter'
-            omegas(:,:,frame) = jitter_sample([Ny, Nz], R, jitterGlobalShift);
         otherwise
-            error('Unknown samplingMethod "%s". Choose ''caipi'', ''ticaipi'', ''pd'', ''rand'', ''radial'', or ''jitter''.', samplingMethod);
+            error('Unknown samplingMethod "%s". Choose ''caipi'', ''ticaipi'', ''pd'', or ''rand''.', samplingMethod);
     end
 end
 end
