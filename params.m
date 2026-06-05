@@ -117,9 +117,9 @@ pislquant    = 10;         % ADC events for receive gain calibration
 samplingMethod = 'pd';
 
 % Poisson-disc sampling (pd)
-pdCalib      = [0, 0];  % fully-sampled calibration region [ny, nz] (0 = none)
+pdCalib      = [9, 6];  % fully-sampled calibration region [ny, nz] (0 = none)
 pdCropCorner = true;    % crop k-space corners (elliptical mask)
-pdDecay      = 1.0;     % density falloff exponent (1 = linear; >1 = steeper toward center)
+pdDecay      = 1.4;     % density falloff exponent (1 = linear; >1 = steeper toward center)
 
 % Gaussian-weighted random sampling (rand)
 randGaussianSigma = [];  % sigma [sy, sz] for Gaussian pdf (empty = [Ny,Nz]/6)
