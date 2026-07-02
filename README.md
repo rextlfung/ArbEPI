@@ -1,6 +1,10 @@
 # ArbEPI: matlab/pulseq code for generating 3D-EPI sequences from arbitrary 2D sampling masks in the phase-encode-partition (ky-kz) plane
 ![An example of a Poisson-Disc 3D-EPI trajectory and corresponding PSF.](poisson3DEPI.png)
 
+## Requirements
+- MATLAB with **Signal Processing Toolbox** and **Curve Fitting Toolbox** (used by Pulseq/TOPPE RF pulse design and k-space trajectory calculation).
+- [Pulseq](https://github.com/pulseq/pulseq) and [toppe](https://github.com/toppeMRI/toppe) MATLAB toolboxes on your path (see `params.m`).
+
 ## Background
 According to compressed sensing, randomly sampling k-space results in incoherent interference in some sparse transform domain e.g. wavelets. This effectively turns the dealiasing problem into a denoising problem, thus allowing the image the be reconstructed from sub-Nyquist sampled k-space. The same principles can be extended to dynamic MRI, where the desired image, when reshaped into a (space x time) matrix, is low-rank in applications like fMRI. By definition, a low-rank matrix is sparse in the singular value domain, thus we want aliasing artifacts that are dense in the singular value domain i.e. high-rank or noise-like when reshaped into a (space x time) matrix. This can be achieved by randomly sampling k-t-space, but there are two obstacles: 1. It is unclear what is the best random sampling strategy. 2. It is technically nontrivial to program the MRI scanner randomly sample k-space. To address these challenges, we present ArbEPI, a framework that accepts arbitrary 2D sampling masks in the phase-encoding-partition (ky-kz) plane and creates fast vendor-agnostic 3D-EPI sequences using the open-source Pulseq library. Examples include: CAIPI, temporally-interleaved CAIPI (TI-CAIPI), Poisson-disc, and Gaussian-weighted random sampling. Tested on GE scanners.
 
