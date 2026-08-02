@@ -10,6 +10,7 @@ clear; close all;
 projRoot = fileparts(mfilename('fullpath'));
 addpath(projRoot);
 addpath(fullfile(projRoot, 'lib'));
+addpath(fullfile(projRoot, 'src'));
 params;
 
 %% 1. Generate sampling masks and main EPI sequence

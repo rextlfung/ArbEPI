@@ -1,6 +1,8 @@
 # ArbEPI: matlab/pulseq code for generating 3D-EPI sequences from arbitrary 2D sampling masks in the phase-encode-partition (ky-kz) plane
 ![An example of a Poisson-Disc 3D-EPI trajectory and corresponding PSF.](poisson3DEPI.png)
 
+ArbEPI is a framework that accepts arbitrary 2D sampling masks in the phase-encoding-partition (ky-kz) plane and creates fast, vendor-agnostic 3D-EPI sequences using the open-source Pulseq library.
+
 ## Requirements
 - MATLAB with **Signal Processing Toolbox** and **Curve Fitting Toolbox** (used by Pulseq/TOPPE RF pulse design and k-space trajectory calculation).
 - [Pulseq](https://github.com/pulseq/pulseq) and [toppe](https://github.com/toppeMRI/toppe) MATLAB toolboxes on your path (see `params.m`).
@@ -22,7 +24,7 @@ According to compressed sensing, randomly sampling k-space results in incoherent
     GRE();           % writes GRE.seq/.pge (optional)
     noise();         % writes noise.seq/.pge (optional)
     ```
-    All outputs go to `output/`. `EPIcal` and `noise` must run after `ArbEPI` as they load `samp_locs.mat`.
+    All outputs go to `output/`. `EPIcal` and `noise` must run after `ArbEPI` as they load `samp_locs.mat`. Calling these functions individually requires the repo root to be on the MATLAB path (running `main` once does this automatically).
 
 ## On the scanner (GE)
 1. Set up `.pge` files by following: https://github.com/jfnielsen/TOPPEpsdSourceCode/tree/UserGuide/v7#running-a-sequence-on-the-scanner (private repo).
@@ -34,12 +36,17 @@ According to compressed sensing, randomly sampling k-space results in incoherent
 
 ## File overview
 
-**Root — user-facing files**
+**Root — key files**
 
 | File | Purpose |
 |------|---------|
-| `params.m` | Central configuration: scan geometry, timing, GE hardware constants, sampling method, output directory |
+| `params.m` | Central configuration: scan geometry, timing, GE hardware constants, sampling method, output directory. Make a copy per experiment. |
 | `main.m` | Run all four sequences in order from a single entry point |
+
+**`src/` — sequence generation (normally invoked via `main.m`; can also be called individually, see Getting started)**
+
+| File | Purpose |
+|------|---------|
 | `gen_sampling_masks.m` | Generate `Ny × Nz × Nframes` sampling mask given acceleration factor `R` |
 | `ArbEPI.m` | Main 3D-EPI sequence function; takes sampling mask as input |
 | `EPIcal.m` | Calibration sequence (mirrors ArbEPI, blips zeroed) |

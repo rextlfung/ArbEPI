@@ -1,5 +1,5 @@
 %% plot_epi.m  Visualization scripts for ArbEPI sequence and sampling masks.
-addpath(fullfile(fileparts(mfilename('fullpath')), 'lib'));
+addpath(fullfile(fileparts(fileparts(mfilename('fullpath'))), 'lib'));
 %
 % Run this script after ArbEPI() to produce diagnostic plots.
 % Requires the following variables in the workspace:

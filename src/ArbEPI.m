@@ -8,9 +8,9 @@ function ArbEPI(omegas)
 %          samp_locs.mat (schedules and partition map for reconstruction)
 
 %% Parameters
-projRoot = fileparts(mfilename('fullpath'));
-addpath(projRoot);
-addpath(fullfile(projRoot, 'lib'));
+repoRoot = fileparts(fileparts(mfilename('fullpath')));
+addpath(repoRoot);
+addpath(fullfile(repoRoot, 'lib'));
 params;
 seqname = 'ArbEPI';
 

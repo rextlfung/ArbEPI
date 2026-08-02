@@ -60,14 +60,16 @@ params.m  ──►  gen_sampling_masks(R)  ──►  omegas (Ny×Nz×Nframes l
 
 ### Configuration
 
-`params.m` is a script (not a function) that sets all parameters in the caller's workspace. All top-level functions call it as:
+`params.m` is a script (not a function) that sets all parameters in the caller's workspace. `main.m` and `params.m` live at the repo root; `ArbEPI.m`, `EPIcal.m`, `GRE.m`, `noise.m`, and `gen_sampling_masks.m` live in `src/`. Each of the five `src/` functions calls `params.m` as:
 
 ```matlab
-projRoot = fileparts(mfilename('fullpath'));
-addpath(projRoot);
-addpath(fullfile(projRoot, 'lib'));
+repoRoot = fileparts(fileparts(mfilename('fullpath')));
+addpath(repoRoot);
+addpath(fullfile(repoRoot, 'lib'));
 params;
 ```
+
+(`fileparts` is applied twice because these functions live one directory below the repo root, where `params.m` and `lib/` reside.)
 
 Do **not** use `run('params.m')` inside a function — MATLAB documents that `run()` may not populate the calling function's workspace. Use the direct `params;` call instead.
 

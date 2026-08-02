@@ -14,9 +14,9 @@ function EPIcal()
 %          kxoe<Nx>.mat (odd/even echo k-space trajectories for ghost correction)
 
 %% Parameters
-projRoot = fileparts(mfilename('fullpath'));
-addpath(projRoot);
-addpath(fullfile(projRoot, 'lib'));
+repoRoot = fileparts(fileparts(mfilename('fullpath')));
+addpath(repoRoot);
+addpath(fullfile(repoRoot, 'lib'));
 params;
 seqname = 'EPIcal';
 

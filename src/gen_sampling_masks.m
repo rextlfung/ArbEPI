@@ -8,9 +8,9 @@ function omegas = gen_sampling_masks(R)
 %   omegas  = gen_sampling_masks(R);
 %   ArbEPI(omegas);
 
-projRoot = fileparts(mfilename('fullpath'));
-addpath(projRoot);
-addpath(fullfile(projRoot, 'lib'));
+repoRoot = fileparts(fileparts(mfilename('fullpath')));
+addpath(repoRoot);
+addpath(fullfile(repoRoot, 'lib'));
 params;
 
 if isempty(randGaussianSigma)

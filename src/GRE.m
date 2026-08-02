@@ -6,9 +6,9 @@ function GRE()
 %          GRE.pge  (GE TOPPE format)
 
 %% Parameters
-projRoot = fileparts(mfilename('fullpath'));
-addpath(projRoot);
-addpath(fullfile(projRoot, 'lib'));
+repoRoot = fileparts(fileparts(mfilename('fullpath')));
+addpath(repoRoot);
+addpath(fullfile(repoRoot, 'lib'));
 params;
 
 seqname = 'GRE';
