@@ -165,7 +165,15 @@ end
 % -------------------------------------------------------------------------
 function mask = poisson_disc_core(nx, ny, max_attempts, radius_x, radius_y, calib, seed)
     mask = zeros(ny, nx);
-    if seed ~= 0, rng(seed); end
+    % Always reseed to the same fixed value on every call (the outer
+    % binary-search loop in pd_sample always passes seed=0 here; see
+    % SigPy's poisson(), which reseeds unconditionally via
+    % `if seed is not None` -- 0 is a valid seed, not a "don't reseed"
+    % sentinel). Without this, the achieved density for a given slope is
+    % not reproducible across binary-search iterations, so the search
+    % never reliably converges and instead burns through all 50
+    % iterations every call.
+    rng(seed);
 
     % Calibration Region
     calib_y = calib(1); calib_x = calib(2);
