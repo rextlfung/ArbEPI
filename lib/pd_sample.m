@@ -194,7 +194,12 @@ function mask = poisson_disc_core(nx, ny, max_attempts, radius_x, radius_y, cali
                 sx = max(floor(qx - rx), 0); ex = min(ceil(qx + rx), nx - 1);
                 sy = max(floor(qy - ry), 0); ey = min(ceil(qy + ry), ny - 1);
                 
-                valid = true;
+                % A sample whose own pixel is already occupied adds an active-list entry
+                % but no new sample. With the minimum radius of 1 such "ghost" samples can
+                % be accepted forever, so for some random draws the search never terminates
+                % (e.g. rng(27) at 90x60, R=6, calib [9 6], decay 1.4). Rejecting them
+                % guarantees termination: every accepted sample occupies a new pixel.
+                valid = mask(floor(qy)+1, floor(qx)+1) == 0;
                 for x = sx:ex
                     for y = sy:ey
                         if mask(y+1, x+1) == 1
