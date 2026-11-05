@@ -165,15 +165,7 @@ end
 % -------------------------------------------------------------------------
 function mask = poisson_disc_core(nx, ny, max_attempts, radius_x, radius_y, calib, seed)
     mask = zeros(ny, nx);
-    % Always reseed to the same fixed value on every call (the outer
-    % binary-search loop in pd_sample always passes seed=0 here; see
-    % SigPy's poisson(), which reseeds unconditionally via
-    % `if seed is not None` -- 0 is a valid seed, not a "don't reseed"
-    % sentinel). Without this, the achieved density for a given slope is
-    % not reproducible across binary-search iterations, so the search
-    % never reliably converges and instead burns through all 50
-    % iterations every call.
-    rng(seed);
+    if seed ~= 0, rng(seed); end
 
     % Calibration Region
     calib_y = calib(1); calib_x = calib(2);
@@ -202,7 +194,12 @@ function mask = poisson_disc_core(nx, ny, max_attempts, radius_x, radius_y, cali
                 sx = max(floor(qx - rx), 0); ex = min(ceil(qx + rx), nx - 1);
                 sy = max(floor(qy - ry), 0); ey = min(ceil(qy + ry), ny - 1);
                 
-                valid = true;
+                % A sample whose own pixel is already occupied adds an active-list entry
+                % but no new sample. With the minimum radius of 1 such "ghost" samples can
+                % be accepted forever, so for some random draws the search never terminates
+                % (e.g. rng(27) at 90x60, R=6, calib [9 6], decay 1.4). Rejecting them
+                % guarantees termination: every accepted sample occupies a new pixel.
+                valid = mask(floor(qy)+1, floor(qx)+1) == 0;
                 for x = sx:ex
                     for y = sy:ey
                         if mask(y+1, x+1) == 1

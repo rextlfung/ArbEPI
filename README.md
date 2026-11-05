@@ -63,6 +63,9 @@ According to compressed sensing, randomly sampling k-space results in incoherent
 | `ticaipi_sample.m` | Temporally-interleaved CAIPI masks (golden-angle frame rotation) |
 | `pd_sample.m` | Variable-density Poisson-disc sampling masks [1] |
 | `rand_sample.m` | Weighted random sampling masks |
+| `circus_sample.m` | CIRCUS (golden-ratio, concentric-ring, radial-like) masks with time interleaving [2] |
+| `pd_sample.m` + radial echo-train ordering | **Radial-PD** is the Poisson-disc mask above with radially ordered echo trains (each shot a spoke through the k-space center). The ordering exists only in ArbEPI-python (`mask2epi_radial`); this MATLAB `mask2epi` is laminar-only, so `prototype_out/export_ball_masks.m` exports the masks for ArbEPI-python to order and build |
+| `gocart_sample.m` | GOCART (golden-angle Cartesian spokes thinned with probability P, central P = 1 region, repeat window W) [3]; a stream cut into frames, returns all frames at once |
 | `gen_gaussian_pdf.m` | 2D Gaussian probability density for use with `rand_sample` |
 | `make_fatsat_rf.m` | Create fat-saturation RF pulse object |
 | `make_excitation_pulse.m` | Create slab-selective sinc excitation pulse |
@@ -101,3 +104,5 @@ The "Arb" in the package name has two meanings:
 
 ## References
 1. Ong, F., & Lustig, M. (2019, May). SigPy: a python package for high performance iterative reconstruction. In Proceedings of the ISMRM 27th Annual Meeting, Montreal, Quebec, Canada (Vol. 4819, No. 5).
+2. Liu, J., & Saloner, D. (2014). Accelerated MRI with CIRcular Cartesian UnderSampling (CIRCUS). Quant Imaging Med Surg, 4(1), 57-67.
+3. Zhu, Y., Guo, Y., Lebel, R. M., Law, M., & Nayak, K. S. (2016). GOCART: GOlden-angle CArtesian randomized time-resolved 3D MRI. Magn Reson Imaging, 34(7), 940-950.
