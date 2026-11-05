@@ -113,7 +113,7 @@ PNSwt        = [0.8 1 0.7]; % PNS direction weights [x, y, z]
 pislquant    = 10;         % ADC events for receive gain calibration
 
 %% Sampling mask parameters
-% 'caipi' | 'ticaipi' | 'pd' | 'rand'
+% 'caipi' | 'ticaipi' | 'pd' | 'rand' | 'circus' | 'gocart'
 samplingMethod = 'pd';
 
 % Poisson-disc sampling (pd)
@@ -123,3 +123,15 @@ pdDecay      = 1.4;     % density falloff exponent (1 = linear; >1 = steeper tow
 
 % Gaussian-weighted random sampling (rand)
 randGaussianSigma = [];  % sigma [sy, sz] for Gaussian pdf (empty = [Ny,Nz]/6)
+
+% CIRCUS sampling (circus), Liu & Saloner, Quant Imaging Med Surg 2014
+circusVariant    = 'rect';   % 'rect' (nested rectangles, squares in physical k-space) | 'rowselect' (paper's Ny x Ny -> Nz row selection)
+circusB          = 30;       % ring shift multiplier (Eq. 2): 0 = radial lines, larger = more broken up
+circusCalib      = [0, 0];   % fully-sampled calibration region [ny, nz] (0 = none)
+circusCropCorner = false;    % crop k-space corners (elliptical mask)
+
+% GOCART sampling (gocart), Zhu et al., Magn Reson Imaging 2016
+gocartP       = 0.5;   % PE sampling probability outside the central region (1 = plain golden-angle Cartesian)
+gocartCentral = 0.15;  % central P = 1 region, fraction of the PEs per frame
+gocartW       = 0.7;   % repeat window, fraction of the PEs per frame
+gocartSeed    = 0;     % RandStream seed (0 = start at angle 0)

@@ -18,6 +18,12 @@ if isempty(randGaussianSigma)
 end
 
 omegas = false(Ny, Nz, Nframes);
+if strcmp(samplingMethod, 'gocart')
+    % GOCART is a continuous stream cut into frames, so all frames are generated at once
+    omegas = gocart_sample([Ny, Nz], R, Nframes, 'P', gocartP, 'central', gocartCentral, ...
+        'W', gocartW, 'seed', gocartSeed);
+    return
+end
 for frame = 1:Nframes
     rng(frame); % deterministic per-frame seed for reproducibility
     switch samplingMethod
@@ -31,8 +37,13 @@ for frame = 1:Nframes
         case 'rand'
             weights = gen_gaussian_pdf([Ny, Nz], randGaussianSigma);
             omegas(:,:,frame) = rand_sample([Ny, Nz], R, weights);
+        case 'circus'
+            % frame index doubles as the time-interleave index (Eq. 4 of the CIRCUS paper)
+            omegas(:,:,frame) = circus_sample([Ny, Nz], R, frame, ...
+                'variant', circusVariant, 'b', circusB, ...
+                'calib', circusCalib, 'crop_corner', circusCropCorner);
         otherwise
-            error('Unknown samplingMethod "%s". Choose ''caipi'', ''ticaipi'', ''pd'', or ''rand''.', samplingMethod);
+            error('Unknown samplingMethod "%s". Choose ''caipi'', ''ticaipi'', ''pd'', ''rand'', ''circus'', or ''gocart''.', samplingMethod);
     end
 end
 end
